@@ -1,4 +1,4 @@
-import type {HeatmapLayer} from 'react-map-gl';
+import type {HeatmapLayer, CircleLayer} from 'react-map-gl';
 
 const MAX_ZOOM_LEVEL = 9;
 
@@ -37,4 +37,28 @@ export const heatmapLayer: HeatmapLayer = {
     // Transition from heatmap to circle layer by zoom level
     'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 7, 1, 9, 0]
   }
+};
+
+export const crimeLayer: CircleLayer = {
+  id: 'crimes',
+  minzoom: MAX_ZOOM_LEVEL - 1,
+  type: 'circle',
+  paint: {
+    "circle-color": "#ffff00",
+    "circle-radius": 8,
+    "circle-stroke-color": "#333333",
+    "circle-stroke-width": 2,
+  },
+};
+
+export const tweetLayer: CircleLayer = {
+  id: 'tweets',
+  minzoom: MAX_ZOOM_LEVEL - 1,
+  type: 'circle',
+  paint: {
+    "circle-color": "#00ff00",
+    "circle-radius": 8,
+    "circle-stroke-color": "#333333",
+    "circle-stroke-width": 2,
+  },
 };

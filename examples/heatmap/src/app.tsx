@@ -3,9 +3,9 @@ import {useState, useEffect, useMemo} from 'react';
 import {render} from 'react-dom';
 import MapGL, {Source, Layer} from 'react-map-gl';
 import ControlPanel from './control-panel';
-import {heatmapLayer} from './map-style';
+import {heatmapLayer, crimeLayer, tweetLayer} from './map-style';
 
-const MAPBOX_TOKEN = ''; // Set your mapbox token here
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiZ2FycmV0dGNyaXNzIiwiYSI6ImNrYWltOWk5cTAyaXMydHMwdm5rMWd1bXQifQ.xY8kGI7PtunrCBszB_2nCw'; // Set your mapbox token here
 
 function filterFeaturesByDay(featureCollection, time) {
   const date = new Date(time);
@@ -26,55 +26,260 @@ function filterFeaturesByDay(featureCollection, time) {
 export default function App() {
   const [allDays, useAllDays] = useState(true);
   const [timeRange, setTimeRange] = useState([0, 0]);
-  const [selectedTime, selectTime] = useState(0);
+  const [selectedTime, selectTime] = useState(1);
   const [earthquakes, setEarthQuakes] = useState(null);
+  const [showTweets, setShowTweets] = useState(false);
+  const [showBox, setShowBox] = useState(false);
 
-  useEffect(() => {
-    /* global fetch */
-    fetch('https://docs.mapbox.com/mapbox-gl-js/assets/earthquakes.geojson')
-      .then(resp => resp.json())
-      .then(json => {
-        // Note: In a real application you would do a validation of JSON data before doing anything with it,
-        // but for demonstration purposes we ingore this part here and just trying to select needed data...
-        const features = json.features;
-        const endTime = features[0].properties.time;
-        const startTime = features[features.length - 1].properties.time;
+  const clearanceLevels = ["ALPHA", "BETA", "GAMMA"];
 
-        setTimeRange([startTime, endTime]);
-        setEarthQuakes(json);
-        selectTime(endTime);
-      })
-      .catch(err => console.error('Could not load data', err)); // eslint-disable-line
-  }, []);
+  const [viewState] = useState({
+    longitude: -104.991531, //-104.991531
+    latitude: 39.742043, //39.742043
+    zoom: 7,
+    pitch: 0,
+    bearing: 0,
+  });
+
+  let crimeData = JSON.parse(`{
+    "type": "FeatureCollection",
+    "features": [
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.9731245,39.73412358 ]
+     },
+     "properties": {
+     "Crime":"Robbery",
+     "Detective Assigned":"Grass",
+     "Witness":"John Smith",
+     "Date":"2022-02-15"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.9755523,39.72823203 ]
+     },
+     "properties": {
+     "Crime":"Motor Vehicle Theft",
+     "Detective Assigned":"Tilly",
+     "Witness":"Jane Smith",
+     "Date":"2022-02-14"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.9751224,39.7291723 ]
+     },
+     "properties": {
+     "Crime":"Burglary",
+     "Detective Assigned":"Desilva",
+     "Witness":"John Doe",
+     "Date":"2022-02-13"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.9799911,39.73012382 ]
+     },
+     "properties": {
+     "Crime":"Robbery",
+     "Detective Assigned":"Hutchinson",
+     "Witness":"Terell Davis",
+     "Date":"2022-02-12"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.9801335,39.73923013 ]
+     },
+     "properties": {
+     "Crime":"Arson",
+     "Detective Assigned":"McTammy",
+     "Witness":"Ed Mcafferey",
+     "Date":"2022-02-11"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.9782013,39.73812023 ]
+     },
+     "properties": {
+     "Crime":"Larceny",
+     "Detective Assigned":"Starsky",
+     "Witness":"Shannon Sharpe",
+     "Date":"2022-02-10"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.9744266,39.72983203 ]
+     },
+     "properties": {
+     "Crime":"Larceny",
+     "Detective Assigned":"Stabler",
+     "Witness":"Rod Smith",
+     "Date":"2022-02-09"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.789904,39.718390 ]
+     },
+     "properties": {
+     "Crime":"Motor Vehicle Theft",
+     "Detective Assigned":"Tilly",
+     "Witness":"Jane Smith",
+     "Date":"2022-02-14"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.799904,39.718390 ]
+     },
+     "properties": {
+     "Crime":"Motor Vehicle Theft",
+     "Detective Assigned":"Tilly",
+     "Witness":"Jane Smith",
+     "Date":"2022-02-14"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.779904,39.715390 ]
+     },
+     "properties": {
+     "Crime":"Motor Vehicle Theft",
+     "Detective Assigned":"Tilly",
+     "Witness":"Jane Smith",
+     "Date":"2022-02-14"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.9741245,39.73312358 ]
+     },
+     "properties": {
+     "Crime":"Damaged Property",
+     "Detective Assigned":"Benson",
+     "Witness":"Brian Griese",
+     "Date":"2022-02-08"
+     }
+   }
+ ]
+ }`)
+  
+
+  const tweetData = JSON.parse(`{
+    "type": "FeatureCollection",
+    "features": [
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.9751245,39.73312358 ]
+     },
+     "properties": {
+     "Crime":"Robbery",
+     "Detective Assigned":"Grass",
+     "Witness":"John Smith",
+     "Date":"2022-02-15"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.9750245,39.73312358 ]
+     },
+     "properties": {
+     "Crime":"Motor Vehicle Theft",
+     "Detective Assigned":"Tilly",
+     "Witness":"Jane Smith",
+     "Date":"2022-02-14"
+     }
+   },
+   {
+     "type": "Feature",
+     "geometry": {
+        "type": "Point",
+        "coordinates":  [ -104.9751224,39.7291723 ]
+     },
+     "properties": {
+     "Crime":"Burglary",
+     "Detective Assigned":"Desilva",
+     "Witness":"John Doe",
+     "Date":"2022-02-13"
+     }
+   }
+ ]
+ }`)
 
   const data = useMemo(() => {
     return allDays ? earthquakes : filterFeaturesByDay(earthquakes, selectedTime);
   }, [earthquakes, allDays, selectedTime]);
 
+  const respondToClick = () => {
+    if (!showTweets) {
+      setShowTweets(true);
+      setShowBox(true);
+    } else if (!showBox) {
+      setShowBox(true);
+    } else {
+      setShowTweets(false);
+      setShowBox(false);
+    }
+  }
+
   return (
     <>
       <MapGL
-        initialViewState={{
-          latitude: 40,
-          longitude: -100,
-          zoom: 3
-        }}
+        initialViewState={viewState}
         mapStyle="mapbox://styles/mapbox/dark-v9"
         mapboxAccessToken={MAPBOX_TOKEN}
+        onClick={(e) => respondToClick() } 
       >
-        {data && (
-          <Source type="geojson" data={data}>
-            <Layer {...heatmapLayer} />
+        
+        <Source type="geojson" data={crimeData}>
+          <Layer {...heatmapLayer} />
+        </Source>
+        <Source type="geojson" data={crimeData}>
+          <Layer {...crimeLayer} />
+        </Source>
+        
+        {showTweets &&
+          <Source type="geojson" data={tweetData}>
+            <Layer {...tweetLayer} />
           </Source>
-        )}
+        }
       </MapGL>
       <ControlPanel
-        startTime={timeRange[0]}
-        endTime={timeRange[1]}
+        startTime={1}
+        endTime={3}
         selectedTime={selectedTime}
-        allDays={allDays}
         onChangeTime={selectTime}
-        onChangeAllDays={useAllDays}
+        showBox={showBox}
       />
     </>
   );

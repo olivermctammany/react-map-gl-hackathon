@@ -36,7 +36,8 @@
     "update-release-branch": "scripts/update-release-branch.sh"
   },
   "dependencies": {
-    "@types/mapbox-gl": "^2.6.0"
+    "@types/mapbox-gl": "^2.6.0",
+    "geojson": "^0.5.0"
   },
   "peerDependencies": {
     "mapbox-gl": "*",

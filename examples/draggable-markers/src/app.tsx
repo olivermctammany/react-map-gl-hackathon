@@ -46,6 +46,7 @@ export default function App() {
         initialViewState={initialViewState}
         mapStyle="mapbox://styles/mapbox/dark-v9"
         mapboxAccessToken={TOKEN}
+        onClick={(e) => { console.log(e)} } 
       >
         <Marker
           longitude={marker.longitude}
